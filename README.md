@@ -1,4 +1,4 @@
-# App
+# Phoenix Template
 
 To start your Phoenix server:
 

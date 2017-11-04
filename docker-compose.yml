@@ -1,0 +1,66 @@
+version: '3.4'
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+  frontend:
+
+services:
+  postgres:
+    image: postgres:9.5-alpine
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/backups:/db/backups
+    networks:
+      - backend
+    environment:
+      POSTGRES_PASSWORD: P4Ssw0rD!
+
+  test: &app
+    image: phoenix-template:development
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    volumes:
+      # Mount our app code directory (".") into our app containers at the
+      # "/usr/src/app" folder:
+      - .:/usr/src/app
+
+    # Specify the networks this service's containers will be attached to (so the 'postgres' service
+    # is visible from here):
+    networks:
+      - backend
+
+    # Keep the stdin open, so we can attach to our app container's process
+    # and do things such as byebug, etc:
+    stdin_open: true
+
+    # Enable sending signals (CTRL+C, CTRL+P + CTRL+Q) into the container:
+    tty: true
+
+    # Specify the services this container depends on:
+    depends_on:
+      - postgres
+
+    # The script that is run every time the container is initialized (created):
+    # entrypoint: /usr/src/app/bin/entrypoint-dev
+
+    # Specify the container's environment variables:
+    environment: &app_env
+      # You can optionally create the `/.env` file and override these values - Use `/example.env`
+      # as an example/template for your dotenv file:
+      MIX_ENV: dev
+      DATABASE_URL: "postgres://postgres:P4Ssw0rD!@postgres:5432/phoenix-template_test"
+
+  web:
+    <<: *app
+    ports:
+      - ${PHOENIX_TEMPLATe_WEB_PORT:-4000}:4000
+    environment:
+      <<: *app_env
+      DATABASE_URL: "postgres://postgres:P4Ssw0rD!@postgres:5432/phoenix-template_dev"
+

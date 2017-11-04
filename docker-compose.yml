@@ -58,6 +58,7 @@ services:
 
   web:
     <<: *app
+    command: mix phx.server
     ports:
       - ${PHOENIX_TEMPLATe_WEB_PORT:-4000}:4000
     environment:
